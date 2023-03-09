@@ -1,0 +1,29 @@
+Now we examine the issue of missing data (NA, NaN, and empty strings). We first notice multiple variables
+with empty strings. Therefore, we alter them to NAs so that we can deal with the issue of missing data all
+at once.
+When examining the potential impact of missing data on our results, it is important to consider the underlying
+reasons why they are missing in the first place, before attempting a solution. Generally missing data is
+classified into three fashions.
+• Missing completely at random (MCAR): This occurs when the data missing are independent of the
+observed and unobserved data. There is no systematic differences that exist between the observations
+with missing information and those with complete data. In many cases of MCAR, the missing data
+simply reduce the analyzable population and statistical power, without introducing bias. The remaining
+data can simply be considered a random sample of the full data set in question.
+• Missing at random (MAR): This occurs when data are missing systematically in relation to the observed
+and not the unobserved data. Generally, the missingness while due to the observed, can still be predicted
+from other information about the observation.
+• Missing not at random (MNAR): This occurs when there is systematically missing data related to the
+unobserved or the missingness is directly related to factors which have not been measured or researched
+in the study. For example, in this data set multiple variables have greater than 90% missing due to the
+data being related/specific to trucks/flatbeds only and not general cars. If observations are not truck
+owners, they are unlikely to be represented in variables/attributes pertaining to only trucks. Similar
+to MAR data, complete cases containing MNAR may not always results in bias if those complete cases
+are biased. However, due to the missing data being unmeasured, it is difficult to address this and will
+likely lead to biased estimates in prediction.
+When dealing this these types of missing data, our options generally include removal of the data, imputation,
+or simply leaving them alone. In the case of this data set 6% of the total data was missing, with a mixture
+of MCAR, MAR, and MNAR. For the MNAR data, these variables were over 90% missing, so we simply
+elect to drop the variables, as imputation would be statistically inappropriate here and would introduce bias
+and unreliable estimates. The remaining variables with NAs showed only small (less than 5%) percentages
+of missing data, and without justifiable reasons for imputation, we elected to leave the NAs present as our
+models are capable of handling NAs.
