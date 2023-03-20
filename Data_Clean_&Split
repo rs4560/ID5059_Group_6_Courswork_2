@@ -1,0 +1,51 @@
+################################################################################
+#  Data Cleaning/Preparation for Modelling
+# Time’ feature has little or no significance in correctly classifying a fraud 
+# transaction and hence eliminate this column from further analysis.
+################################################################################
+#Remove 'Time' variable
+df <- df[,-1]
+#Change 'Class' variable to factor
+df$Class <- as.factor(df$Class)
+levels(df$Class) <- c("Not_Fraud", "Fraud")
+#Scale numeric variables
+df[,-30] <- scale(df[,-30])
+head(df)
+
+### 
+# We can split the full dataset ourselves
+###
+set.seed(123)
+split <- sample.split(df$Class, SplitRatio = 0.7)
+train <-  subset(df, split == TRUE)
+test <- subset(df, split == FALSE)
+# We can use an oversampling method with the minority class of fraudulent data to
+# rebalance the data.  Using random oversampling can prevent information loss, but
+# we lead to overfitting later on
+
+### We can also use Synthetic Minority Oversampling Technique or SMOTE
+# Powerful and commonly used
+
+# downsampling
+set.seed(9560)
+down_train <- downSample(x = train[, -ncol(train)],
+                         y = train$Class)
+table(down_train$Class)
+
+# rose
+set.seed(9560)
+rose_train <- ROSE(Class ~ ., data  = train)$data 
+
+table(rose_train$Class)
+
+# Oversampling
+set.seed(9560)
+up_train <- upSample(x = train[, -ncol(train)],
+                     y = train$Class)
+table(up_train$Class)
+
+# smote (Cannot use DMwR package...no longer exists)
+set.seed(9560)
+smote_train <- smote(Class ~ ., data  = train)
+
+table(smote_train$Class)
