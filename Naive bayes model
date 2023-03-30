@@ -1,0 +1,107 @@
+# load libraries 
+import sys
+!{sys.executable} -m pip install numpy pandas matplotlib scikit-learn | grep -v 'already satisfied'
+import seaborn as sns
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE, RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
+train = pd.read_csv("train.csv")
+pd.set_option('display.max_columns',None)
+display(train)
+
+# Data cleaning and split data
+train.drop('Time',axis=1,inplace=True)
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.3,random_state=123,stratify=y)
+ros = RandomOverSampler(random_state=9560)
+X_over_train,y_over_train = ros.fit_resample(X_train,y_train)
+
+# Data exploration(correlation and mutual information)
+corr_matrix =  train.corr()
+corr_matrix['Class'].sort_values(ascending=False)
+plt.figure(figsize=(12, 10))
+sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f")
+plt.title("Correlation Matrix")
+plt.show()
+#From correlation matrix, all the components are not strongly correlated to class. 
+
+from sklearn.feature_selection import mutual_info_classif
+# caculate mutual information 
+mi_scores = mutual_info_classif(X_over_train, y_over_train)
+# select features that threshold are over 0.65
+threshold = 0.6
+selected_features = np.where(mi_scores > threshold)[0]
+
+# print the result of mutual information
+print("Selected features and their mutual information scores:")
+for idx in selected_features:
+    print(f"{train.columns[idx]}: {mi_scores[idx]:.4f}")
+    
+# Naive bsyes model
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score,confusion_matrix,classification_report
+gnb = GaussianNB()
+gnb.fit(X_over_train,y_over_train)
+y_pred =gnb.predict(X_test)
+accuracy = accuracy_score(y_test,y_pred)
+conf_matrix = confusion_matrix(y_test,y_pred)
+class_report = classification_report(y_test,y_pred)
+print("Accuracy:", accuracy)
+print("Classification Report:\n", class_report)
+
+from sklearn.metrics import roc_curve, auc
+fpr, tpr, _ = roc_curve(y_test, y_pred)
+roc_auc = auc(fpr, tpr)
+plt.figure()
+lw = 2
+plt.plot(fpr, tpr, color='darkorange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic')
+plt.legend(loc="lower right")
+plt.show()
+
+# Evaluation
+# use gridsearch to find best parameter
+from sklearn.model_selection import GridSearchCV
+param_grid = {'var_smoothing': np.linspace(-10, -8, 10)}
+grid_search = GridSearchCV(gnb, param_grid, cv=5, scoring='accuracy')
+grid_search.fit(X_over_train,y_over_train)
+best_params = grid_search.best_params_
+best_score = grid_search.best_score_
+
+# Fit best model
+best_model = grid_search.best_estimator_
+best_model.fit(X_train,y_train)
+y_pred1 = best_model.predict(X_test)
+
+accuracy1 = accuracy_score(y_test,y_pred1)
+conf_matrix1 = confusion_matrix(y_test,y_pred1)
+class_report1 = classification_report(y_test,y_pred1)
+
+print("Accuracy:", accuracy1)
+print("Classification Report:\n", class_report1)
+
+sns.heatmap(conf_matrix1,annot=True,fmt='d')
+
+fpr1, tpr1, _ = roc_curve(y_test, y_pred1)
+roc_auc1 = auc(fpr1, tpr1)
+plt.figure()
+lw = 2
+plt.plot(fpr, tpr, color='darkorange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc1)
+plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.legend(loc="lower right")
+plt.show()
+#It seems that the model using best parameter is not better than before. In concusion, Naive Bayes did not perform well on this data set.
+
+
