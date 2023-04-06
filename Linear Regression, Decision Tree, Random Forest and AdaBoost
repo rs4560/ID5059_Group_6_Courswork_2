@@ -1,0 +1,236 @@
+# import the libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+!{sys.executable} -m pip install numpy pandas matplotlib scikit-learn | grep -v 'already satisfied'
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE, RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
+from sklearn.impute import SimpleImputer
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.neural_network import MLPRegressor
+from sklearn.ensemble import GradientBoostingRegressor 
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.metrics import accuracy_score,confusion_matrix,classification_report
+
+
+train = pd.read_csv("train.csv")
+pd.set_option('display.max_columns',None)
+display(train)
+
+
+# split the data
+train.drop('Time',axis=1,inplace=True)
+
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.3,random_state=123,stratify=y)
+ros = RandomOverSampler(random_state=9560)
+
+X_over_train,y_over_train = ros.fit_resample(X_train,y_train)
+
+
+# exploring the data 
+# correlation matrix 
+corr_matrix =  train.corr()
+
+corr_matrix['Class'].sort_values(ascending=False)
+
+plt.figure(figsize=(14, 14))
+# heat map of the correlation matrix
+sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f")
+plt.title("Correlation Matrix for the Train dataset")
+
+plt.show()
+
+# there is seemingly little correlation between Class and the other attributes
+
+
+# we know calculate mutual information
+mi_scores = mutual_info_classif(X_over_train, y_over_train)
+# threshold set to 0.6
+threshold = 0.6 
+selected_features = np.where(mi_scores > threshold)[0]
+
+print("The mutual information scores are the following:")
+for idx in selected_features:
+    print(f"{train.columns[idx]}: {mi_scores[idx]:.4f}")
+
+
+# y_pred needs to be made binary
+# if y_pred is more than the threshold, set to 1
+threshold = 0.6
+y_pred_binary = np.where(y_pred > threshold, 1, 0)
+
+
+# fitting to the linear reression model
+from sklearn.metrics import roc_curve, auc
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import accuracy_score,confusion_matrix,classification_report
+
+# Linear regression model
+lin_reg = LinearRegression()
+# fit the data to the linear regression model
+lin_reg.fit(X_over_train,y_over_train)
+# predict the values of class 
+y_pred =lin_reg.predict(X_test)
+
+# y_pred needs to be made binary
+# if y_pred is more than the threshold, set to 1
+threshold = 0.6
+y_pred_binary = np.where(y_pred > threshold, 1, 0)
+
+# determine the confusion matrix 
+con_matrix = confusion_matrix(y_test,y_pred_binary)
+# determine the accuracy score
+acc_score = accuracy_score(y_test,y_pred_binary)
+# determine the classificiation report 
+class_report = classification_report(y_test,y_pred_binary)
+# print the results
+print("Accuracy:", acc_score)
+print("Classification Report:\n", class_report)
+
+# plot the ROC curve 
+fpr, tpr, _ = roc_curve(y_test, y_pred_binary)
+roc_auc = auc(fpr, tpr)
+plt.figure()
+lw = 2
+plt.plot(fpr, tpr, color='orange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('FPR (False Positive Rate)')
+plt.ylabel('TPR (True Positive Rate)')
+plt.title('ROC (Receiver Operating Characteristic) for the Linear regression model')
+plt.legend(loc="lower right")
+plt.show()
+
+
+
+# fitting to the decision tree regression model
+from sklearn.metrics import roc_curve, auc
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import accuracy_score,confusion_matrix,classification_report
+
+# decision tree regression model
+dec_tree_reg = DecisionTreeRegressor()
+# fit the data to the linear regression model
+dec_tree_reg.fit(X_over_train,y_over_train)
+# predict the values of class 
+y_pred1 =dec_tree_reg.predict(X_test)
+
+# y_pred needs to be made binary
+# if y_pred is more than the threshold, set to 1
+threshold1 = 0.6
+y_pred_binary1 = np.where(y_pred1 > threshold, 1, 0)
+
+# determine the confusion matrix 
+con_matrix = confusion_matrix(y_test,y_pred_binary1)
+# determine the accuracy score
+acc_score = accuracy_score(y_test,y_pred_binary1)
+# determine the classificiation report 
+class_report = classification_report(y_test,y_pred_binary1)
+# print the results
+print("Accuracy:", acc_score)
+print("Classification Report:\n", class_report)
+
+# plot the ROC curve 
+fpr, tpr, _ = roc_curve(y_test, y_pred_binary1)
+roc_auc = auc(fpr, tpr)
+plt.figure()
+lw = 2
+plt.plot(fpr, tpr, color='orange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('FPR (False Positive Rate)')
+plt.ylabel('TPR (True Positive Rate)')
+plt.title('ROC (Receiver Operating Characteristic) for the decision tree regression')
+plt.legend(loc="lower right")
+plt.show()
+
+
+
+# fitting to the random forest regression model
+from sklearn.metrics import roc_curve, auc
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import accuracy_score,confusion_matrix,classification_report
+
+# random forest regression model
+ran_for_reg = RandomForestRegressor()
+# fit the data to the random forest regression model
+ran_for_reg.fit(X_over_train,y_over_train)
+# predict the values of class 
+y_pred2 = ran_for_reg.predict(X_test)
+
+# y_pred needs to be made binary
+# if y_pred is more than the threshold, set to 1
+threshold1 = 0.6
+y_pred_binary2 = np.where(y_pred2 > threshold, 1, 0)
+
+# determine the confusion matrix 
+con_matrix = confusion_matrix(y_test,y_pred_binary2)
+# determine the accuracy score
+acc_score = accuracy_score(y_test,y_pred_binary2)
+# determine the classificiation report 
+class_report = classification_report(y_test,y_pred_binary2)
+# print the results
+print("Accuracy:", acc_score)
+print("Classification Report:\n", class_report)
+
+# plot the ROC curve 
+fpr, tpr, _ = roc_curve(y_test, y_pred_binary2)
+roc_auc = auc(fpr, tpr)
+plt.figure()
+lw = 2
+plt.plot(fpr, tpr, color='orange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('FPR (False Positive Rate)')
+plt.ylabel('TPR (True Positive Rate)')
+plt.title('ROC (Receiver Operating Characteristic) for the random forest regression model')
+plt.legend(loc="lower right")
+plt.show()
+
+
+# fitting to the AdaBoost Classifier model
+from sklearn.ensemble import AdaBoostClassifier
+
+ada_boost = AdaBoostClassifier(n_estimators=50)
+ada_boost.fit(X_over_train,y_over_train)
+# predict the values of class 
+y_pred3 = ada_boost.predict(X_test)
+
+# y_pred needs to be made binary
+# if y_pred is more than the threshold, set to 1
+threshold1 = 0.6
+y_pred_binary3 = np.where(y_pred3 > threshold, 1, 0)
+
+# determine the confusion matrix 
+con_matrix = confusion_matrix(y_test,y_pred_binary3)
+# determine the accuracy score
+acc_score = accuracy_score(y_test,y_pred_binary3)
+# determine the classificiation report 
+class_report = classification_report(y_test,y_pred_binary2)
+# print the results
+print("Accuracy:", acc_score)
+print("Classification Report:\n", class_report)
+
+# plot the ROC curve 
+fpr, tpr, _ = roc_curve(y_test, y_pred_binary3)
+roc_auc = auc(fpr, tpr)
+plt.figure()
+lw = 2
+plt.plot(fpr, tpr, color='orange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('FPR (False Positive Rate)')
+plt.ylabel('TPR (True Positive Rate)')
+plt.title('ROC (Receiver Operating Characteristic) for the Ada Boost Classifier')
+plt.legend(loc="lower right")
+plt.show()
